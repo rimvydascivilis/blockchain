@@ -6,7 +6,6 @@
 
 using namespace std;
 
-unsigned long state = 0;
 bitset<256> get_256_bits(const char chr, const unsigned long idx) {
     bitset<256> res;
     srand(int(chr) * (idx + 0xF00DBABE));
