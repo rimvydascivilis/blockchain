@@ -4,9 +4,9 @@
 funkcija maišos_funkcija(įvestis):
     Sukuriamas 256 bitų ilgio bitų masyvas rezultatas = 1011001001000000101010111001001100101001000111101011000101001111010011111101010110110101010100010110110111001001101111000000111001111111110011000110001011100110000100111110010001111110001010001110110101010100101100011010010101011111100101101101001100010000
 
-    kiekvienam symboliui iš įvesties:
+    kiekvienam simboliui iš įvesties:
         Sukuriamas 256 bitų ilgio bitų masyvas generavimo_rezultatas
-        Priskiriama generavimo seed'ą = symbolio ASCII kodas * (symbolio indeksas + 0xFOODBABE)
+        Priskiriama generavimo seed'ą = simbolio ASCII kodas * (simbolio indeksas + 0xFOODBABE)
 
         kiekvienam bitui j iš generavimo_rezultato:
             generavimo_rezultatas[j] = atsitiktinis bitas
@@ -40,6 +40,38 @@ funkcija maišos_funkcija(įvestis):
 ```
 $ make test
 ```
+### Testavimo procesas
+1. Testas
+    - Tikrina
+      - Ar programa veikia su bet kokio ilgio string'ais
+      - Ar programa grąžina 256 bitų ilgio hash'ą
+      - Ar programa grąžina tą patį hash'ą, kai paleidžiama su tuo pačiu string'u (deterministinė)
+    - Testavimo failai
+      - 10 failų, kuriuose yra 10000 vienodų string'ų
+      - 10 failų, kuriuose yra 10000 atsitiktinių string'ų
+      - 10 failų, kuriuose yra 10000 atsitiktinių string'ų ir kiekvienas string'as turi vieną pakeistą simbolį
+      - Tuščias failas
+    - Rezultatas
+      - Skaičius, kiek kartų hash'o ilgis nesutapo su 256 bitų ilgiu
+      - Skaičius, kiek kartų hash'as nesutapo su hash'u, gautu paleidus programą su tuo pačiu string'u
+2. Testas
+    - Tikrina
+      - Laiko priklausomybę nuo eilučių skaičiaus. Kiekvienas failas yra dvigubai ilgesnis už prieš tai buvusį, pradedant nuo 1 eilutės (1, 2, 4, 8, ...)
+    - Testavimo failai
+      - Lietuvos konstitucija (789 eilutės)
+    - Rezultatas
+      - Grafikas, kurio x ašis yra eilučių skaičius, o y ašis yra laikas milisekundėmis
+3. Testas
+    - Tikrina
+      - Ar maišos funkcija atspari kolizijoms
+      - Ar maišos funkcija turi lavinos efektą
+    - Testavimo įvestis
+      - 10, 100, 500, 1000 ilgio atsitiktinių string'ų poros, kurios skiriasi viena nuo kitos vienu simboliu. Kiekvieno ilgio string'ų porų yra po 25000
+    - Rezultatas
+      - Skaičius, kiek kartų buvo rasta kolizija
+      - Vidutinis, mažiausias ir didžiausias hex'ų ir bitų skirtumas tarp string'ų porų hash'ų
+      - Grafikas, kuris rodo, kiek vidutiniškai pasikeičia kiekvienas bitas hash'e, kai viename string'e pakeičiamas vienas simbolis
+
 ### Testavimo rezultatai
 ```json
 [
@@ -119,4 +151,4 @@ Funkcijos stiprybės:
 - Lavinos efektas
 
 Funkcijos silpnybės:
-- Ganėtinai lėta (100_000 symbolių string'as hash'uojamas ~0.5s)
+- Ganėtinai lėta (100_000 simbolių string'as hash'uojamas ~0.5s)
