@@ -108,7 +108,9 @@ $ make test
 2. Programa visada grąžina 256 bitų ilgio hash'ą.
 3. Programą paleidus su tuo pačiu string'u, hash'as visada yra tas pats.
 4. Programą veikia O(n) laiku, kur n yra string'o ilgis.
-![Maišos funkcijos laiko grafikas](/img/time.png)
+
+    ![Maišos funkcijos laiko grafikas](/img/time.png)
+
 5. Maišos funkcija atspari kolizijoms. Bandyta su 1000000 skirtingų string'ų, kolizijų nerasta.
 6. Funkcija turi lavinos efektą. Bandyta su 1000000 skirtingų string'ų, 1 bito pakeitimas string'e vidutiniškai pakeičia 93% hex'ų ir 50% bitų.
 
