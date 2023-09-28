@@ -24,7 +24,8 @@ HASH_F = [
         'get_hash_f': lambda x: x.decode('utf-8').split(' ')[4].strip(),
         'get_hash_a': lambda x: x.decode('utf-8').split(' ')[4].strip(),
         'get_time_f': lambda x: float(x.decode('utf-8').split(' ')[2]),
-        'get_time_a': lambda x: float(x.decode('utf-8').split(' ')[2])
+        'get_time_a': lambda x: float(x.decode('utf-8').split(' ')[2]),
+        'no_bits': 256,
     }
 ]
 
@@ -42,6 +43,8 @@ results = [
         'avg_bit_diff': None,
         'min_bit_diff': None,
         'max_bit_diff': None,
+        'bit_diff_distr': [0] * hash_f.get('no_bits', 256),
+        'no_bits': hash_f.get('no_bits', 256),
     } for hash_f in HASH_F
 ]
 
@@ -125,6 +128,8 @@ def main():
         name = HASH_F[i]['name']
         cmd = HASH_F[i]['cmd_arg']
         get_hash = HASH_F[i]['get_hash_a']
+        no_bits = HASH_F[i]['no_bits']
+        bit_diff_distr = [0] * no_bits
         min_hex_diff = None
         max_hex_diff = None
         avg_hex_diff = 0
@@ -156,7 +161,7 @@ def main():
                 avg_hex_diff += hex_diff
                 if hash_a == hash_b:
                     results[i]['collision_count'] += 1
-                bit_diff = different_bits(hash_a, hash_b)
+                bit_diff = different_bits(hash_a, hash_b, no_bits, bit_diff_distr)
                 if min_bit_diff is None or bit_diff < min_bit_diff:
                     min_bit_diff = bit_diff
                 if max_bit_diff is None or bit_diff > max_bit_diff:
@@ -168,6 +173,9 @@ def main():
         results[i]['min_bit_diff'] = min_bit_diff
         results[i]['max_bit_diff'] = max_bit_diff
         results[i]['avg_bit_diff'] = avg_bit_diff / pair_count_sum
+        results[i]['bit_diff_distr'] = [x / pair_count_sum for x in bit_diff_distr]
+
+    graph_bit_diff_dist(results)
 
     with open(f'{RESULT_DIR}/results.json', 'w') as f:
         f.write(dumps(results, indent=2)) # Save results as json
@@ -175,20 +183,36 @@ def main():
 def different_hex(a, b):
     return len([1 for i in range(len(a)) if a[i] != b[i]]) / len(a)
 
-def different_bits(a, b):
+def different_bits(a, b, no_bits, bit_diff_distr):
     a = bin(int(a, 16))[2:]
-    a_paddded = '0' * (256 - len(a)) + a
+    a_paddded = '0' * (no_bits - len(a)) + a
     b = bin(int(b, 16))[2:]
-    b_paddded = '0' * (256 - len(b)) + b
-    return len([1 for i in range(len(a_paddded)) if a_paddded[i] != b_paddded[i]]) / len(a_paddded)
+    b_paddded = '0' * (no_bits - len(b)) + b
+    diff = 0
+    for i in range(len(a_paddded)):
+        if a_paddded[i] != b_paddded[i]:
+            bit_diff_distr[i] += 1
+            diff += 1
+    return diff / len(a_paddded)
 
 def graph_time(results):
+    plt.clf()
     for result in results:
         plt.plot([x['lines'] for x in result['hashing_time']], [x['time'] for x in result['hashing_time']], label=result['name'])
     plt.xlabel('Lines')
     plt.ylabel('Time (ms)')
     plt.legend()
     plt.savefig(f'{RESULT_DIR}/time.png')
+
+def graph_bit_diff_dist(results):
+    plt.clf()
+    for result in results:
+        plt.plot([i for i in range(result['no_bits'])], result['bit_diff_distr'], label=result['name'])
+    plt.xlabel('Bit')
+    plt.ylabel('Avg. difference percentage')
+    plt.yticks([i/10 for i in range(11)])
+    plt.legend()
+    plt.savefig(f'{RESULT_DIR}/bit_diff_dist.png')
 
 if __name__ == '__main__':
     run(f'mkdir -p {RESULT_DIR}'.split(' '))
