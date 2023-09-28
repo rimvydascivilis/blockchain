@@ -62,7 +62,8 @@ def main():
         for i in range(FILE_COUNT):
             with open(tmpdir + f'/1_3_{i}.txt', 'w') as f:
                 copy = chars.copy()
-                copy[5000] = random.choice(printable)
+                while copy[5000] == chars[5000]:
+                    copy[5000] = random.choice(printable)
                 f.write(''.join(copy))
         with open(tmpdir + '/1_4_0.txt', 'w') as f:
             pass
