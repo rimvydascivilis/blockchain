@@ -1,5 +1,5 @@
 # Maišos funkcija
-## Pseudokods
+## Pseudokodas
 ```
 funkcija maišos_funkcija(įvestis):
     Sukuriamas 256 bitų ilgio bitų masyvas rezultatas = 1011001001000000101010111001001100101001000111101011000101001111010011111101010110110101010100010110110111001001101111000000111001111111110011000110001011100110000100111110010001111110001010001110110101010100101100011010010101011111100101101101001100010000
@@ -99,10 +99,10 @@ $ make test
     ![Maišos funkcijos laiko grafikas](/img/time.png)
 
 5. Maišos funkcija atspari kolizijoms. Bandyta su 1000000 skirtingų string'ų, kolizijų nerasta.
-6. Funkcija turi lavinos efektą. Bandyta su 1000000 skirtingų string'ų, 1 bito pakeitimas string'e vidutiniškai pakeičia 94% hex'ų ir 50% bitų.
+6. Funkcija turi lavinos efektą. Bandyta su 1000000 skirtingų string'ų, 1 simbolio pakeitimas string'e vidutiniškai pakeičia 94% hex'ų ir 50% bitų.
 7. Hash'o skirtingų bit'ų pasiskirstymas:
 
-    ![Maišos funkcijos bitų pasiskirstymas](/img/bit_diff_dist.png)
+    ![Maišos funkcijos skirtingų bitų pasiskirstymas](/img/bit_diff_dist.png)
 
 Funkcijos stiprybės:
 - Deterministinė
