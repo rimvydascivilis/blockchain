@@ -1,5 +1,6 @@
 from string import digits, ascii_letters, punctuation
 import matplotlib.pyplot as plt
+import pandas as pd
 import tempfile
 import random
 from subprocess import run
@@ -21,10 +22,40 @@ HASH_F = [
         'name': 'Rimvydas Civilis',
         'cmd_file': './build/main tf {}',
         'cmd_arg': "./build/main t {}",
-        'get_hash_f': lambda x: x.decode('utf-8').split(' ')[4].strip(),
-        'get_hash_a': lambda x: x.decode('utf-8').split(' ')[4].strip(),
-        'get_time_f': lambda x: float(x.decode('utf-8').split(' ')[2]),
-        'get_time_a': lambda x: float(x.decode('utf-8').split(' ')[2]),
+        'get_hash_f': lambda x: x.stdout.decode('utf-8').split(' ')[4].strip(),
+        'get_hash_a': lambda x: x.stdout.decode('utf-8').split(' ')[4].strip(),
+        'get_time_f': lambda x: float(x.stdout.decode('utf-8').split(' ')[2]),
+        'get_time_a': lambda x: float(x.stdout.decode('utf-8').split(' ')[2]),
+        'no_bits': 256,
+    },
+    {
+        'name': 'Md5',
+        'cmd_file': './build/functions -algo md5 -file {}',
+        'cmd_arg': "./build/functions -algo md5 -text {}",
+        'get_hash_f': lambda x: x.stdout.decode('utf-8').split(' ')[0].strip(),
+        'get_hash_a': lambda x: x.stdout.decode('utf-8').split(' ')[0].strip(),
+        'get_time_f': lambda x: float(x.stdout.decode('utf-8').split(' ')[1].strip()),
+        'get_time_a': lambda x: float(x.stdout.decode('utf-8').split(' ')[1].strip()),
+        'no_bits': 128,
+    },
+    {
+        'name': 'SHA-1',
+        'cmd_file': './build/functions -algo sha1 -file {}',
+        'cmd_arg': "./build/functions -algo sha1 -text {}",
+        'get_hash_f': lambda x: x.stdout.decode('utf-8').split(' ')[0].strip(),
+        'get_hash_a': lambda x: x.stdout.decode('utf-8').split(' ')[0].strip(),
+        'get_time_f': lambda x: float(x.stdout.decode('utf-8').split(' ')[1].strip()),
+        'get_time_a': lambda x: float(x.stdout.decode('utf-8').split(' ')[1].strip()),
+        'no_bits': 160,
+    },
+    {
+        'name': 'SHA-256',
+        'cmd_file': './build/functions -algo sha256 -file {}',
+        'cmd_arg': "./build/functions -algo sha256 -text {}",
+        'get_hash_f': lambda x: x.stdout.decode('utf-8').split(' ')[0].strip(),
+        'get_hash_a': lambda x: x.stdout.decode('utf-8').split(' ')[0].strip(),
+        'get_time_f': lambda x: float(x.stdout.decode('utf-8').split(' ')[1].strip()),
+        'get_time_a': lambda x: float(x.stdout.decode('utf-8').split(' ')[1].strip()),
         'no_bits': 256,
     }
 ]
@@ -72,6 +103,7 @@ def main():
         for i in range(len(HASH_F)):
             cmd = HASH_F[i]['cmd_file']
             get_hash = HASH_F[i]['get_hash_f']
+            no_bits = HASH_F[i]['no_bits']
 
             for j in range(1, 2):
                 for k in range(FILE_COUNT):
@@ -80,12 +112,12 @@ def main():
                     prev_hash = None
                     for _ in range(10):
                         result = run(cmd.format(file_name).split(' '), capture_output=True)
-                        hash = get_hash(result.stdout)
+                        hash = get_hash(result)
                         if prev_hash is not None:
                             if prev_hash != hash:
                                 results[i]['not_deterministic_count'] += 1
-                            elif len(prev_hash) != len(hash):
-                                results[i]['size_diff_count'] += 1
+                        if len(hash) * 4 != no_bits: # 4 bits per hex char
+                            results[i]['size_diff_count'] += 1
                         prev_hash = hash
 
 
@@ -117,7 +149,7 @@ def main():
                 time_sum = 0
                 for _ in range(10):
                     result = run(cmd.format(file_name).split(' '), capture_output=True)
-                    time = get_time(result.stdout)
+                    time = get_time(result)
                     time_sum += time
                 results[i]['hashing_time'].append({'lines': files_length[j], 'time': time_sum / 5})
     
@@ -152,8 +184,8 @@ def main():
                 inp_b = ''.join(chars)
                 result_a = run(cmd.format(inp_a).split(' '), capture_output=True)
                 result_b = run(cmd.format(inp_b).split(' '), capture_output=True)
-                hash_a = get_hash(result_a.stdout)
-                hash_b = get_hash(result_b.stdout)
+                hash_a = get_hash(result_a)
+                hash_b = get_hash(result_b)
                 hex_diff = different_hex(hash_a, hash_b)
                 if min_hex_diff is None or hex_diff < min_hex_diff:
                     min_hex_diff = hex_diff
@@ -176,7 +208,8 @@ def main():
         results[i]['avg_bit_diff'] = avg_bit_diff / pair_count_sum
         results[i]['bit_diff_distr'] = [x / pair_count_sum for x in bit_diff_distr]
 
-    graph_bit_diff_dist(results)
+    graph_bit_diff(results)
+    graph_hash_diff(results)
 
     with open(f'{RESULT_DIR}/results.json', 'w') as f:
         f.write(dumps(results, indent=2)) # Save results as json
@@ -205,7 +238,7 @@ def graph_time(results):
     plt.legend()
     plt.savefig(f'{RESULT_DIR}/time.png')
 
-def graph_bit_diff_dist(results):
+def graph_bit_diff(results):
     plt.clf()
     for result in results:
         plt.plot([i for i in range(result['no_bits'])], result['bit_diff_distr'], label=result['name'])
@@ -213,7 +246,21 @@ def graph_bit_diff_dist(results):
     plt.ylabel('Avg. difference percentage')
     plt.yticks([i/10 for i in range(11)])
     plt.legend()
-    plt.savefig(f'{RESULT_DIR}/bit_diff_dist.png')
+    plt.savefig(f'{RESULT_DIR}/bit_diff.png')
+
+def graph_hash_diff(results):
+    df = pd.DataFrame({
+        'Hex min': [result['min_hex_diff'] for result in results],
+        'Hex avg': [result['avg_hex_diff'] for result in results],
+        'Hex max': [result['max_hex_diff'] for result in results],
+        'Bit min': [result['min_bit_diff'] for result in results],
+        'Bit avg': [result['avg_bit_diff'] for result in results],
+        'Bit max': [result['max_bit_diff'] for result in results],
+    }, index=[result['name'] for result in results])
+    ax = df.plot.bar(rot=0)
+    ax.set_ylabel('Avg. difference percentage')
+    ax.set_xlabel('Hash function')
+    plt.savefig(f'{RESULT_DIR}/hash_diff.png')
 
 if __name__ == '__main__':
     run(f'mkdir -p {RESULT_DIR}'.split(' '))

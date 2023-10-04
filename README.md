@@ -110,3 +110,17 @@ Funkcijos stiprybės:
 
 Funkcijos silpnybės:
 - Ganėtinai lėta (100_000 simbolių string'as hash'uojamas ~0.5s)
+
+## Palyginimas su SHA-1, SHA-256, MD5
+
+### Hash'inimo laikai
+
+![Hash'inimo laikai](/img/compare_time.png)
+
+### Hash'o bit'ų, hex'ų skirtumai pasikeitus vienam simboliui
+
+![Hash'o bit'ų, hex'ų skirtumai pasikeitus vienam simboliui](/img/compare_diff.png)
+
+### Kiekvieno hash'o bit'o skirtumo procentas
+
+![Kiekvieno hash'o bit'o skirtumo procentas](/img/compare_bit_diff.png)

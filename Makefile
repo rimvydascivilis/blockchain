@@ -1,4 +1,5 @@
 CC = g++
+GO = go
 CFLAGS = -Wall -std=c++2a
 TARGET = main
 BUILD_DIR = build
@@ -17,11 +18,14 @@ $(TARGET): $(BUILD_DIR) $(SRC_DIR)/$(TARGET).cpp
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
 
-test: release requirements
+test: release requirements functions
 	$(PYTHON) test/main.py
 
 requirements:
 	$(PYTHON) -m pip install -r test/requirements.txt
+
+functions:
+	$(GO) build -o $(BUILD_DIR)/functions test/main.go
 
 clean:
 	$(RM) -r $(BUILD_DIR)
